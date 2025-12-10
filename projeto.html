@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedTag Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-teal: #00A99D; /* Cor principal MedTag */
+            --dark-teal: #004D47;     /* Cor escura das formas */
+            --bg-color: #F0F4F4;
+            --card-white: #ffffff;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+            /* Fundo com formas abstratas inspirado na imagem */
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 169, 157, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(0, 77, 71, 0.15) 0%, transparent 25%);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-teal);
+            letter-spacing: -1px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .logo span {
+            color: var(--dark-teal); /* Tag mais escura */
+        }
+
+        /* Ícone de WiFi simulado como na imagem */
+        .wifi-icon {
+            font-size: 1.5rem;
+            vertical-align: top;
+            margin-left: 5px;
+        }
+
+        .cards-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: var(--card-white);
+            border-radius: 20px;
+            padding: 30px;
+            width: 250px;
+            box-shadow: 0 10px 25px rgba(0, 169, 157, 0.15);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 5px solid var(--primary-teal);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Elemento decorativo "líquido" no fundo do card */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 100px;
+            height: 100px;
+            background: var(--primary-teal);
+            opacity: 0.1;
+            border-radius: 50%;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            color: var(--dark-teal);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .card-value {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--primary-teal);
+            margin: 10px 0;
+        }
+
+        .unit {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        /* Animação quando o número muda */
+        .pop-anim {
+            animation: pop 0.3s ease-in-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .footer-status {
+            margin-top: 50px;
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            background-color: #2ecc71;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">MedTag<span></span> <span class="wifi-icon">📶</span></div>
+            <p style="color: #666;">Sistema de Controle de Medicamentos</p>
+        </div>
+
+        <div class="cards-container">
+            <div class="card">
+                <div class="card-title">Paracetamol</div>
+                <div class="card-value" id="val-p">0</div>
+                <div class="unit">Unidades lidas</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Buscopan</div>
+                <div class="card-value" id="val-b">0</div>
+                <div class="unit">Unidades lidas</div>
+            </div>
+        </div>
+
+        <div class="footer-status">
+            <span class="status-dot"></span> Sistema Conectado via Arduino Mega
+        </div>
+    </div>
+
+    <script>
+        let lastP = 0;
+        let lastB = 0;
+
+        function updateData() {
+            fetch('/dados')
+                .then(response => response.json())
+                .then(data => {
+                    const elP = document.getElementById('val-p');
+                    const elB = document.getElementById('val-b');
+
+                    // Atualiza Paracetamol
+                    if (data.p !== lastP) {
+                        elP.innerText = data.p;
+                        elP.classList.remove('pop-anim'); // Reseta animação
+                        void elP.offsetWidth; // Trigger reflow
+                        elP.classList.add('pop-anim');
+                        lastP = data.p;
+                    }
+
+                    // Atualiza Buscopan
+                    if (data.b !== lastB) {
+                        elB.innerText = data.b;
+                        elB.classList.remove('pop-anim');
+                        void elB.offsetWidth;
+                        elB.classList.add('pop-anim');
+                        lastB = data.b;
+                    }
+                })
+                .catch(err => console.error("Erro ao buscar dados:", err));
+        }
+
+        // Atualiza a cada 500ms (meio segundo)
+        setInterval(updateData, 500);
+    </script>
+</body>
+</html>

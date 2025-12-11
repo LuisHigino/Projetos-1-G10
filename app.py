@@ -2,12 +2,11 @@ import serial
 import json
 import threading
 import time
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__, template_folder='.')
 
 # --- CONFIGURAÇÃO ---
-# ALTERADO: Mudamos de 'COM3' para 'COM13' aqui
 PORTA_ARDUINO = 'COM13'  
 BAUD_RATE = 9600
 
@@ -40,7 +39,7 @@ def ler_serial():
                 print(f"Erro de leitura: {e}")
         time.sleep(0.1)
 
-# Inicia a thread apenas se o Arduino foi conectado (para evitar erros)
+# Inicia a thread apenas se o Arduino foi conectado
 if arduino:
     thread = threading.Thread(target=ler_serial)
     thread.daemon = True
@@ -56,6 +55,25 @@ def projeto():
 def dados():
     return jsonify(dados_remedios)
 
+# --- NOVA ROTA DE RESET ---
+@app.route('/reset', methods=['POST'])
+def reset_sistema():
+    global dados_remedios
+    
+    # 1. Envia o comando 'R' para o Arduino Mega resetar a memória física
+    if arduino:
+        try:
+            arduino.write(b'R')  # Envia o byte 'R' conforme esperado pelo Arduino
+            print("Comando de RESET ('R') enviado ao Arduino.")
+        except Exception as e:
+            print(f"Erro ao enviar reset via Serial: {e}")
+    else:
+        print("Arduino desconectado: Reset apenas simulado no Python.")
+
+    # 2. Zera a variável no Python imediatamente
+    dados_remedios = {"p": 0, "b": 0}
+    
+    return jsonify({"status": "sucesso", "mensagem": "Contagem zerada!"})
+
 if __name__ == '__main__':
-    # '0.0.0.0' permite acesso de outros dispositivos na rede local
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, use_reloader=False, host='0.0.0.0', port=5000)

@@ -24,7 +24,7 @@
             align-items: center;
             min-height: 100vh;
             color: #333;
-            /* Fundo com formas abstratas inspirado na imagem */
+            /* Fundo com formas abstratas */
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(0, 169, 157, 0.1) 0%, transparent 20%),
                 radial-gradient(circle at 90% 80%, rgba(0, 77, 71, 0.15) 0%, transparent 25%);
@@ -50,10 +50,9 @@
         }
         
         .logo span {
-            color: var(--dark-teal); /* Tag mais escura */
+            color: var(--dark-teal); 
         }
 
-        /* Ícone de WiFi simulado como na imagem */
         .wifi-icon {
             font-size: 1.5rem;
             vertical-align: top;
@@ -128,8 +127,37 @@
             100% { transform: scale(1); }
         }
 
+        /* --- ESTILO DO NOVO BOTÃO DE RESET --- */
+        .btn-reset {
+            background-color: #ff6b6b; /* Vermelho suave */
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 40px;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            outline: none;
+        }
+
+        .btn-reset:hover {
+            background-color: #ee5253;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(238, 82, 83, 0.4);
+        }
+
+        .btn-reset:active {
+            transform: translateY(1px);
+        }
+
         .footer-status {
-            margin-top: 50px;
+            margin-top: 30px;
             font-size: 0.8rem;
             color: #aaa;
         }
@@ -142,7 +170,6 @@
             display: inline-block;
             margin-right: 5px;
         }
-
     </style>
 </head>
 <body>
@@ -167,6 +194,10 @@
             </div>
         </div>
 
+        <button class="btn-reset" onclick="zerarContagem()">
+            Esvaziar estoque 🗑️
+        </button>
+
         <div class="footer-status">
             <span class="status-dot"></span> Sistema Conectado via Arduino Mega
         </div>
@@ -186,7 +217,7 @@
                     // Atualiza Paracetamol
                     if (data.p !== lastP) {
                         elP.innerText = data.p;
-                        elP.classList.remove('pop-anim'); // Reseta animação
+                        elP.classList.remove('pop-anim');
                         void elP.offsetWidth; // Trigger reflow
                         elP.classList.add('pop-anim');
                         lastP = data.p;
@@ -204,7 +235,25 @@
                 .catch(err => console.error("Erro ao buscar dados:", err));
         }
 
-        // Atualiza a cada 500ms (meio segundo)
+        // Função para acionar o Reset
+        function zerarContagem() {
+            if (!confirm("Tem certeza que deseja ZERAR toda a contagem?")) return;
+
+            fetch('/reset', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Resposta do reset:", data);
+                    
+                    // Zera visualmente de imediato
+                    document.getElementById('val-p').innerText = "0";
+                    document.getElementById('val-b').innerText = "0";
+                    lastP = 0;
+                    lastB = 0;
+                })
+                .catch(err => console.error("Erro ao resetar:", err));
+        }
+
+        // Atualiza a cada 500ms
         setInterval(updateData, 500);
     </script>
 </body>
